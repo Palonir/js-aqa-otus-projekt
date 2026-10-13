@@ -1,0 +1,30 @@
+{
+  "name": "js-aqa-otus-projekt",
+  "version": "1.0.0",
+  "description": "Создано в рамках курса OTUS JavaScript QA Engineer",
+  "homepage": "https://github.com/Palonir/js-aqa-otus-projekt#readme",
+  "bugs": {
+    "url": "https://github.com/Palonir/js-aqa-otus-projekt/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Palonir/js-aqa-otus-projekt.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/main.js",
+    "lint:ci": "eslint .",
+    "lint": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.7",
+    "globals": "^17.13.0",
+    "prettier": "3.9.10"
+  }
+}
