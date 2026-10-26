@@ -5,5 +5,12 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 export default [
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   pluginJs.configs.recommended,
-  eslintPluginPrettierRecommended
+  eslintPluginPrettierRecommended,
+  {
+    files: ['**/*.test.js', '**/__tests__/**/*.js'],
+    ...jest.configs['flat/recommended'],
+    languageOptions: {
+      globals: { ...globals.jest }
+    }
+  }
 ];
