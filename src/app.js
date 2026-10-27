@@ -38,3 +38,46 @@ export const getTotal = (items = [], discount = 0) => {
   const total = items.reduce((acc, { price, quantity }) => acc + price * quantity, 0);
   return total * (1 - discount / 100);
 };
+
+/**
+ * Суммирует числовые значения оценок учащегося.
+ *
+ * Принимает объект вида `{ [имя]: оценка }` и возвращает сумму всех оценок.
+ * Не изменяет переданный объект.
+ *
+ * @param {Record<string, number>} scores - Объект с оценками: ключ — имя учащегося,
+ *   значение — числовая оценка. Должен быть непустым.
+ * @returns {number} Сумма всех числовых значений в объекте.
+ * @throws {Error} Если `scores` не является объектом, равен `null` или пуст.
+ * @throws {Error} Если хотя бы одно значение в объекте не является числом.
+ *
+ * @example
+ * getScore({ Anna: 10, Ivan: 8 }); // 18
+ *
+ * @example
+ * getScore({});          // Error: пустой объект
+ * getScore({ Anna: '10' }); // Error: значение не число
+ */
+export const getScore = scores => {
+  if (scores === null || typeof scores !== 'object' || Array.isArray(scores)) {
+    throw new Error('Ожидается объект вида { имя: оценка }');
+  }
+
+  const keys = Object.keys(scores);
+  if (keys.length === 0) {
+    throw new Error('Объект с оценками пуст');
+  }
+
+  let sum = 0;
+  for (const key of keys) {
+    const value = scores[key];
+    if (!Number.isFinite(value)) {
+      const received = value === null ? 'null' : typeof value;
+      throw new Error(`Значение по ключу "${key}" должно быть конечным числом, получено: ${received}`);
+    }
+
+    sum += value;
+  }
+
+  return sum;
+};
