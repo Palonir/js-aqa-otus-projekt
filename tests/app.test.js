@@ -1,4 +1,4 @@
-import { nameIsValid, fullTrim, getTotal } from '../src/app';
+import { nameIsValid, fullTrim, getTotal, getScore } from '../src/app';
 
 describe('nameIsValid', () => {
   test.each([
@@ -73,5 +73,46 @@ describe('getTotal', () => {
 
   test('скидка 1% — минимум', () => {
     expect(getTotal([{ price: 100, quantity: 1 }], 1)).toBe(99);
+  });
+});
+
+describe('getScore', () => {
+  test.each([
+    [{ Anna: 10 }, 10, 'одна оценка'],
+    [{ Anna: 10, Ivan: 8 }, 18, 'несколько оценок']
+  ])('%s → %p', (input, expected) => {
+    expect(getScore(input)).toBe(expected);
+  });
+
+  test.each([[null], [undefined], [5], ['string'], [{}], [[]], [[10, 20]]])(
+    'Невалидный аргумент (%p) → ошибка',
+    input => {
+      expect(() => getScore(input)).toThrow();
+    }
+  );
+
+  test('пустой объект → отдельное сообщение', () => {
+    expect(() => getScore({})).toThrow('Объект с оценками пуст');
+  });
+
+  test('массив → отдельное сообщение', () => {
+    expect(() => getScore([10, 20])).toThrow('Ожидается объект вида { имя: оценка }');
+  });
+
+  test.each([
+    ['10', 'string'],
+    [null, 'null'],
+    [undefined, 'undefined'],
+    [true, 'boolean'],
+    [{}, 'object'],
+    [10n, 'bigint'],
+    [NaN, 'number'],
+    [Infinity, 'number']
+  ])('Значение %p → ошибка с типом %p', (badValue, expectedType) => {
+    expect(() => getScore({ Anna: badValue })).toThrow(expectedType);
+  });
+
+  test('сообщение содержит имя проблемного ключа', () => {
+    expect(() => getScore({ Anna: 10, Ivan: '8' })).toThrow(/Ivan/);
   });
 });
