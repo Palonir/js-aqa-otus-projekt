@@ -1,10 +1,12 @@
 const defaultPassword = '123456!Aa';
 const config = {
-  baseURL: 'https://bookstore.demoqa.com/Account/v1',
+  baseURL: 'https://bookstore.demoqa.com',
   uri: {
-    userUri: 'User',
-    generateTokenUri: 'GenerateToken',
-    authorizedUri: 'Authorized'
+    userUri: 'Account/v1/User',
+    generateTokenUri: 'Account/v1/GenerateToken',
+    authorizedUri: 'Account/v1/Authorized',
+    oneBook: 'BookStore/v1/Book',
+    listBook: 'BookStore/v1/Books'
   },
   defaultUser: {
     userName: 'palonirNew',
