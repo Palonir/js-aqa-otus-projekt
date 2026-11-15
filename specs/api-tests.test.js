@@ -1,8 +1,18 @@
 import config from '../framework/config';
+import {
+  createUser,
+  generateToken,
+  auth,
+  deleteUser,
+  getUser,
+  authUser,
+  getBook,
+  addBookInUserList,
+  deleteBookInUserList,
+  replaceBookInUserList
+} from '../framework/services';
 
 const {
-  baseURL,
-  uri: { userUri, generateTokenUri, authorizedUri },
   defaultUser: { userName, password, userID }
 } = config;
 
@@ -10,13 +20,7 @@ describe('POST /User', () => {
   it('Успешное создание пользователя', async () => {
     const userName = `palonir_${Date.now()}`;
     const payload = { userName, password };
-    const res = await fetch(`${baseURL}/${userUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const body = await res.json();
+    const { res, body } = await createUser(payload);
 
     expect(body.userID).toEqual(expect.any(String)); // не совпадает название поля - userId в сваггере, userID в реальном ответе
     expect(body.username).toBe(userName);
@@ -25,13 +29,8 @@ describe('POST /User', () => {
   });
 
   it('Ошибка при использовании занятого имени', async () => {
-    const res = await fetch(`${baseURL}/${userUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userName, password })
-    });
-
-    const body = await res.json();
+    const payload = { userName, password };
+    const { res, body } = await createUser(payload);
 
     expect(body).toEqual({
       code: '1204',
@@ -41,13 +40,8 @@ describe('POST /User', () => {
   });
 
   it('Ошибка при использовании невалидного пароля (без спецсимвола)', async () => {
-    const res = await fetch(`${baseURL}/${userUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userName: `palonir_${Date.now()}`, password: '123456Aa' })
-    });
-
-    const body = await res.json();
+    const payload = { userName: `palonir_${Date.now()}`, password: '123456Aa' };
+    const { res, body } = await createUser(payload);
 
     expect(body).toEqual({
       code: '1300',
@@ -60,12 +54,7 @@ describe('POST /User', () => {
 describe('POST /GenerateToken', () => {
   it('Успешная генерация токена', async () => {
     const payload = { userName, password };
-    const res = await fetch(`${baseURL}/${generateTokenUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const body = await res.json();
+    const { res, body } = await generateToken(payload);
 
     expect(body).toEqual({
       token: expect.any(String),
@@ -78,11 +67,7 @@ describe('POST /GenerateToken', () => {
 
   it('Ошибка при генерации токена (несуществующий юзер)', async () => {
     const payload = { userName: `palonir_${Date.now()}`, password };
-    const res = await fetch(`${baseURL}/${generateTokenUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const { res } = await generateToken(payload);
 
     expect(res.status).toBe(400); // из-за ошибочного статуса преждевременно писать проверки на тело ошибки
   });
@@ -91,24 +76,14 @@ describe('POST /GenerateToken', () => {
 describe('POST /Authorized', () => {
   it('Авторизация существующего пользователя', async () => {
     const payload = { userName, password };
-    const res = await fetch(`${baseURL}/${authorizedUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const { res } = await auth(payload);
 
     expect(res.status).toBe(200);
   });
 
   it('Авторизация существующего пользователя c ошибкой в пароле', async () => {
     const payload = { userName, password: '123456?Aa' };
-    const res = await fetch(`${baseURL}/${authorizedUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const body = await res.json();
-    console.log(body);
+    const { res, body } = await auth(payload);
 
     expect(body).toEqual({
       code: '1207', // ошибка типа, по документации number
@@ -120,13 +95,7 @@ describe('POST /Authorized', () => {
   it('Авторизация несуществующего пользователя', async () => {
     const userName = `palonir_${Date.now()}`;
     const payload = { userName, password };
-    const res = await fetch(`${baseURL}/${authorizedUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const body = await res.json();
-    console.log(body);
+    const { res, body } = await auth(payload);
 
     expect(body).toEqual({
       code: '1207', // ошибка типа, по документации number
@@ -138,36 +107,18 @@ describe('POST /Authorized', () => {
 
 describe('DELETE /User', () => {
   let testUserName;
-  let token;
   let payload;
-  let userId;
 
   it('Удаление существующего юзера', async () => {
     testUserName = `palonir_${Date.now()}`;
     payload = { userName: testUserName, password };
-    const resCreateUser = await fetch(`${baseURL}/${userUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+
+    const { res: resCreateUser, userID } = await createUser(payload);
     expect(resCreateUser.status).toBe(201);
-    const bodyCreateUser = await resCreateUser.json();
-    userId = bodyCreateUser.userID;
 
-    // payload = { testUserName, password };
-    const resGenerateToken = await fetch(`${baseURL}/${generateTokenUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    expect(resGenerateToken.status).toBe(200);
-    const bodyGenerateToken = await resGenerateToken.json();
-    token = bodyGenerateToken.token;
+    const { token } = await authUser(payload);
 
-    const resDeleteUser = await fetch(`${baseURL}/${userUri}/${userId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const { resDeleteUser } = await deleteUser(userID, token);
     // const bodyDeleteUser = await resDeleteUser.json(); // ошибка при парсинге из-за пустого ответа
 
     // expect(bodyDeleteUser).toEqual({
@@ -179,25 +130,11 @@ describe('DELETE /User', () => {
 });
 
 describe('GET /User', () => {
-  let token;
-
   it('Получение существующего пользователя', async () => {
     const payload = { userName, password };
-    const resGenerateToken = await fetch(`${baseURL}/${generateTokenUri}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    expect(resGenerateToken.status).toBe(200);
-    const bodyGenerateToken = await resGenerateToken.json();
-    token = bodyGenerateToken.token;
+    const { token } = await authUser(payload);
 
-    const resGetUser = await fetch(`${baseURL}/${userUri}/${userID}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const bodyGetUser = await resGetUser.json();
-
+    const { res: resGetUser, body: bodyGetUser } = await getUser(userID, token);
     expect(bodyGetUser).toEqual({
       userId: userID,
       username: userName,
@@ -207,10 +144,154 @@ describe('GET /User', () => {
   }, 60_000);
 
   it('Получение существующего пользователя без передачи токена', async () => {
-    const res = await fetch(`${baseURL}/${userUri}/${userID}`, {
-      method: 'GET'
+    const { res, body } = await getUser(userID);
+
+    expect(body).toEqual({
+      code: '1200',
+      message: 'User not authorized!'
     });
-    const body = await res.json();
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /Book', () => {
+  const arrBook = ['9781449325862', '9781449331818', '9781449337711', '9781449365035', '9781491904244'];
+
+  for (const book of arrBook) {
+    it(`Получение существующей книги с isbn = ${book}`, async () => {
+      const { res, body } = await getBook(book);
+
+      expect(body).toEqual({
+        isbn: book,
+        title: expect.any(String),
+        subTitle: expect.any(String),
+        author: expect.any(String),
+        publish_date: expect.any(String),
+        publisher: expect.any(String),
+        pages: expect.any(Number),
+        description: expect.any(String),
+        website: expect.any(String)
+      });
+      expect(res.status).toBe(200);
+    });
+  }
+
+  it('Получение несуществующей книги', async () => {
+    const { res, body } = await getBook('9999999999999');
+
+    expect(body).toEqual({
+      code: '1205',
+      message: 'ISBN supplied is not available in Books Collection!'
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('POST /Books', () => {
+  const isbn = '9781449325862';
+  const payload = { userName, password };
+
+  it('Добавление и удаление существующей книги', async () => {
+    const { token } = await authUser(payload);
+    const { res, body } = await addBookInUserList(userID, isbn, token);
+
+    // expect(body).toEqual({
+    //   isbn
+    // }); // тело ответа не соответствует спецификации
+    expect(res.status).toBe(201);
+
+    const resDelete = await deleteBookInUserList(userID, isbn, token);
+
+    // expect(bodyDelete).toEqual({
+    //   userID,
+    //   isbn,
+    //   message: ''
+    // }); несоответствие спецификации - у метода отсутствует тело ответа
+    expect(resDelete.status).toBe(204);
+  });
+
+  it('Добавление несуществующей книги', async () => {
+    const { token } = await authUser(payload);
+    const { res, body } = await addBookInUserList(userID, '9999999999999', token);
+
+    expect(body).toEqual({
+      code: '1205',
+      message: 'ISBN supplied is not available in Books Collection!'
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('Добавление книги без авторизации', async () => {
+    const { res, body } = await addBookInUserList(userID, isbn);
+
+    expect(body).toEqual({
+      code: '1200',
+      message: 'User not authorized!'
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('PUT /Books', () => {
+  const isbn = '9781449325862';
+  const replaceIsbn = '9781449331818';
+  const payload = { userName, password };
+
+  it('Замена книги из списка', async () => {
+    const { token } = await authUser(payload);
+
+    const { res } = await addBookInUserList(userID, isbn, token);
+    expect(res.status).toBe(201);
+
+    const { res: resReplace, body } = await replaceBookInUserList(isbn, userID, replaceIsbn, token);
+
+    expect(body).toEqual({
+      userId: userID,
+      username: userName,
+      books: [
+        {
+          isbn: replaceIsbn,
+          title: expect.any(String),
+          subTitle: expect.any(String),
+          author: expect.any(String),
+          publish_date: expect.any(String),
+          publisher: expect.any(String),
+          pages: expect.any(Number),
+          description: expect.any(String),
+          website: expect.any(String)
+        }
+      ]
+    });
+    expect(resReplace.status).toBe(200);
+
+    const resDelete = await deleteBookInUserList(userID, replaceIsbn, token);
+    expect(resDelete.status).toBe(204);
+  });
+
+  it('Замена не добавленной в список книги', async () => {
+    const { token } = await authUser(payload);
+    const { res, body } = await replaceBookInUserList(isbn, userID, replaceIsbn, token);
+
+    expect(body).toEqual({
+      code: '1206',
+      message: "ISBN supplied is not available in User's Collection!"
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('Замена на несуществующую книгу', async () => {
+    const { token } = await authUser(payload);
+    const { res, body } = await replaceBookInUserList(isbn, userID, '9999999999999', token);
+
+    expect(body).toEqual({
+      code: '1205',
+      message: 'ISBN supplied is not available in Books Collection!'
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('Замена книги без авторизации', async () => {
+    const { res, body } = await replaceBookInUserList(isbn, userID, replaceIsbn);
 
     expect(body).toEqual({
       code: '1200',
