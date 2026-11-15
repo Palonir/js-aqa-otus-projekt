@@ -18,15 +18,19 @@
     "start": "node src/main.js",
     "lint:ci": "eslint .",
     "lint": "eslint . --fix",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "allure:report": "npx allure serve"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "allure": "^3.33.0",
+    "allure-jest": "^3.14.0",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.7",
     "globals": "^17.13.0",
-    "prettier": "3.9.10"
+    "prettier": "3.9.10",
+    "response-openapi-validator": "^2.0.2"
   },
   "dependencies": {
     "@types/jest": "^30.0.0",

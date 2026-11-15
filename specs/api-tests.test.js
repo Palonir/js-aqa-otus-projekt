@@ -11,6 +11,11 @@ import {
   deleteBookInUserList,
   replaceBookInUserList
 } from '../framework/services';
+import { ResponseValidator } from 'response-openapi-validator';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const {
   defaultUser: { userName, password, userID }
@@ -26,6 +31,27 @@ describe('POST /User', () => {
     expect(body.username).toBe(userName);
     expect(body.books).toEqual([]);
     expect(res.status).toBe(201);
+  });
+
+  it('Ответ API соответствует спецификации', async () => {
+    const payload = { userName: `palonir_${Date.now()}`, password };
+    const { res, body } = await createUser(payload);
+
+    const validator = new ResponseValidator({
+      openApiSpecPath: path.resolve(__dirname, '../swagger.json')
+    });
+
+    const validationError = await validator.assertResponse({
+      method: 'POST',
+      requestUrl: 'https://bookstore.demoqa.com/Account/v1/User',
+      statusCode: res.status,
+      body: body
+    });
+
+    if (validationError) {
+      console.error('Ошибки валидации:', JSON.stringify(validationError, null, 2));
+    }
+    expect(validationError).toBeUndefined();
   });
 
   it('Ошибка при использовании занятого имени', async () => {

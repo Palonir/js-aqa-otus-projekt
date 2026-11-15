@@ -33,7 +33,7 @@ const config = {
   // ],
 
   // Indicates which provider should be used to instrument code for coverage
-  coverageProvider: 'v8'
+  coverageProvider: 'v8',
 
   // A list of reporter names that Jest uses when writing coverage reports
   // coverageReporters: [
@@ -149,6 +149,7 @@ const config = {
 
   // The test environment that will be used for testing
   // testEnvironment: "jest-environment-node",
+  testEnvironment: 'allure-jest/node'
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
