@@ -11,7 +11,6 @@ import type {
 
 /**
  * Единая форма возврата всех API-функций: сырой Response + уже распарсенное тело.
- * Дженерик B — тип тела ответа, который каждая функция уточняет сама.
  */
 interface ApiCall<B> {
   res: Response;
@@ -19,11 +18,7 @@ interface ApiCall<B> {
 }
 
 /**
- * Безопасное чтение JSON-тела ответа.
- *
- * Зачем: `res.json()` бросает SyntaxError, если тело пустое. Например, DELETE /User
- * возвращает 204 No Content без тела — «голый» json() падал прямо в сервисе,
- * и тест удаления пользователя был красным (см. MIGRATION.md, «Вынужденные исправления»).
+ * Чтение JSON-тела ответа.
  */
 async function parseJsonBody(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -85,13 +80,6 @@ export async function auth(data: Credentials): Promise<ApiCall<ApiResult<boolean
 
 /**
  * Генерация токена и авторизация пользователя.
- *
- * Это ассерт-хелпер: он гарантирует либо строку токена, либо падение с понятной
- * ошибкой (раньше при token: null тесты молча отправляли заголовок 'Bearer null').
- *
- * NOTE (технический долг, вне скоупа миграции): expect() внутри сервисного слоя —
- * антипаттерн, сервис перестаёт быть переиспользуемым вне тестов. Оставлено
- * как есть, чтобы миграция не меняла поведение.
  * @param data Учётные данные для авторизации.
  */
 export async function authUser(data: Credentials): Promise<{ token: string; res: Response }> {
@@ -101,8 +89,6 @@ export async function authUser(data: Credentials): Promise<{ token: string; res:
   const { res } = await auth(data);
   expect(res.status).toBe(200);
 
-  // API возвращает 200 даже при логической ошибке (status: 'Failed', token: null),
-  // поэтому после expect(200) сужение через as оправдано, но токен проверяем явно.
   const token = (body as TokenResponse).token;
   if (typeof token !== 'string') {
     throw new Error(`authUser: токен не получен, ответ API: ${JSON.stringify(body)}`);
@@ -187,7 +173,7 @@ export async function addBookInUserList(
 
 /**
  * Удаление книги из списка пользователя.
- * Возвращает только Response: у DELETE /Book нет тела ответа (см. комментарий в тестах).
+ * Возвращает только Response: у DELETE /Book нет тела ответа.
  * @param userID Идентификатор пользователя.
  * @param isbn Идентификатор книги.
  * @param token Токен для авторизации.

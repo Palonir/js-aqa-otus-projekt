@@ -28,8 +28,6 @@ describe('POST /User', () => {
     const payload = { userName, password };
     const { res, body } = await createUser(payload);
 
-    // body — union (успех | ошибка). `'userID' in body` сужает тип до успешной ветки:
-    // компилятор разрешает обращение к полям только после такой проверки (narrowing).
     expect('userID' in body && body.userID).toEqual(expect.any(String)); // не совпадает название поля - userId в сваггере, userID в реальном ответе
     expect('userID' in body && body.username).toBe(userName);
     expect('userID' in body && body.books).toEqual([]);
@@ -44,11 +42,6 @@ describe('POST /User', () => {
       openApiSpecPath: path.resolve(__dirname, '../swagger.json')
     });
 
-    // В v2 пакета assertResponse при несоответствии схемы БРОСАЕТ исключение
-    // (ResponseDoesNotMatchJSONSchemaError), а при успехе возвращает void.
-    // Старый код был написан под API первой версии, где ошибка возвращалась
-    // значением, — его ветка console.error никогда не выполнялась.
-    // TypeScript выдал на этом месте ошибку TS1345 и заставил переписать честно.
     try {
       await validator.assertResponse({
         method: 'POST',
@@ -56,7 +49,6 @@ describe('POST /User', () => {
         statusCode: res.status,
         body: body
       });
-      // Валидируем схему ответа на успешное создание — статус должен быть 201
       expect(res.status).toBe(201);
     } catch (error) {
       console.error('Ошибки валидации:', error instanceof Error ? error.message : error);
@@ -102,16 +94,6 @@ describe('POST /GenerateToken', () => {
   });
 
   it.failing('Ошибка при генерации токена (несуществующий юзер)', async () => {
-    // ОСОЗНАННО ПАДАЮЩИЙ ТЕСТ: документирует расхождение API со спецификацией.
-    // Swagger для POST /GenerateToken документирует ошибку как 400 (MessageModal),
-    // но реально API возвращает 200 с телом { token: null, expires: null,
-    // status: 'Failed', result: 'User authorization failed.' } (проверено curl,
-    // 2026-11). Ошибка выражается в теле, а не в статус-коде.
-    //
-    // Почему it.failing, а не подгонка ожидания под реальность: тест — детектор
-    // нарушения контракта. Пока API так отвечает, он честно красный; если API
-    // начнёт возвращать 400, Jest упадёт с "unexpectedly passing" — и это сигнал
-    // перевернуть тест в обычный it.
     const payload = { userName: `palonir_${Date.now()}`, password };
     const { res } = await generateToken(payload);
 
@@ -152,28 +134,16 @@ describe('POST /Authorized', () => {
 });
 
 describe('DELETE /User', () => {
-  // В strict-режиме TypeScript запрещает неявный any — переменные
-  // нужно типизировать явно, в отличие от JS-версии.
   let testUserName: string;
   let payload: Credentials;
 
   it.failing('Удаление существующего юзера', async () => {
-    // ОСОЗНАННО ПАДАЮЩИЙ ТЕСТ: документирует расхождение «ожидание — 200»
-    // и «реальность — 204 No Content без тела» (см. комментарий у ассерта).
-    //
-    // История: раньше тест падал ещё до ассертов — в сервисе deleteUser()
-    // res.json() бросал исключение на пустом теле 204. Это был баг самого
-    // фреймворка (не API), он исправлен через parseJsonBody: теперь тест
-    // доходит до ассерта и документирует расхождение проверкой, а не крешем.
     testUserName = `palonir_${Date.now()}`;
     payload = { userName: testUserName, password };
 
     const { res: resCreateUser, body } = await createUser(payload);
     expect(resCreateUser.status).toBe(201);
 
-    // body — union (успех | ошибка). Деструктурировать userID напрямую нельзя:
-    // у ветки-ошибки такого поля нет, и TypeScript это запретит. Поэтому
-    // сужаем тип через 'in' и честно падаем, если пользователь не создался.
     if (!('userID' in body)) {
       throw new Error(`Пользователь не создан, ответ API: ${JSON.stringify(body)}`);
     }
@@ -181,9 +151,6 @@ describe('DELETE /User', () => {
 
     const { token } = await authUser(payload);
 
-    // Исправлено при миграции: раньше было `const { resDeleteUser } = ...`,
-    // но deleteUser возвращает { res, body } — такого свойства нет, и TypeScript
-    // поймал бы это как ошибку компиляции. В JS это молча давало undefined.
     const { res: resDeleteUser, body: _bodyDelete } = await deleteUser(userID, token);
 
     // const bodyDeleteUser = await resDeleteUser.json(); // ошибка при парсинге из-за пустого ответа
