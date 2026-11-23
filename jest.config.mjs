@@ -20,7 +20,6 @@ const config = {
   // Indicates whether the coverage information should be collected while executing the test
   collectCoverage: true,
 
-  testEnvironment: 'node',
   // An array of glob patterns indicating a set of files for which coverage information should be collected
   // collectCoverageFrom: undefined,
 
@@ -149,7 +148,11 @@ const config = {
 
   // The test environment that will be used for testing
   // testEnvironment: "jest-environment-node",
-  testEnvironment: 'allure-jest/node'
+  testEnvironment: 'allure-jest/node',
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', { useESM: true }]
+  },
+  extensionsToTreatAsEsm: ['.ts']
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},

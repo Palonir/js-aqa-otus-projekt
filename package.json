@@ -15,26 +15,29 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node src/main.js",
+    "start": "node src/main.ts",
     "lint:ci": "eslint .",
     "lint": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "allure:report": "npx allure serve"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
     "allure": "^3.33.0",
     "allure-jest": "^3.14.0",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jest": "^29.17.0",
     "eslint-plugin-prettier": "^5.5.7",
     "globals": "^17.13.0",
+    "jest": "^30.5.2",
     "prettier": "3.9.10",
-    "response-openapi-validator": "^2.0.2"
+    "response-openapi-validator": "^2.0.2",
+    "ts-jest": "^29.4.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.74.0"
   },
-  "dependencies": {
-    "@types/jest": "^30.0.0",
-    "eslint-plugin-jest": "^29.17.0",
-    "jest": "^30.5.2"
-  }
+  "dependencies": {}
 }
