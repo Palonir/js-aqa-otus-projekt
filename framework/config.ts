@@ -1,5 +1,17 @@
+import type { Credentials } from './types';
+
+/**
+ * Интерфейс конфигурации.
+ */
+export interface Config {
+  baseURL: string;
+  uri: Record<'userUri' | 'generateTokenUri' | 'authorizedUri' | 'oneBook' | 'listBook', string>;
+  defaultUser: Credentials & { userID: string };
+}
+
 const defaultPassword = '123456!Aa';
-const config = {
+
+const config: Config = {
   baseURL: 'https://bookstore.demoqa.com',
   uri: {
     userUri: 'Account/v1/User',

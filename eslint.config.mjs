@@ -1,14 +1,29 @@
 import globals from 'globals';
-import pluginJs from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import tseslint from 'typescript-eslint';
+import jestPlugin from 'eslint-plugin-jest';
 
 export default [
+  {
+    ignores: ['allure-report/**', 'allure-results/**', 'coverage/**']
+  },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
-  pluginJs.configs.recommended,
+  ...tseslint.configs.recommended,
   eslintPluginPrettierRecommended,
   {
-    files: ['**/*.test.js', '**/__tests__/**/*.js'],
-    ...jest.configs['flat/recommended'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_'
+        }
+      ]
+    }
+  },
+  {
+    files: ['**/*.test.{js,ts}', '**/__tests__/**/*.{js,ts}'],
+    ...jestPlugin.configs['flat/recommended'],
     languageOptions: {
       globals: { ...globals.jest }
     }

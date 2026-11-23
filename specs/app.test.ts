@@ -19,7 +19,7 @@ describe('nameIsValid', () => {
     ['nik olas', 'с пробелом'],
     [null, 'с null'],
     [undefined, 'c undefined']
-  ])('Не валидный вариант(%p) - %p', input => {
+  ])('Не валидный вариант(%p) - %p', (input, _title) => {
     expect(nameIsValid(input)).toBeFalsy();
   });
 });
@@ -80,7 +80,7 @@ describe('getScore', () => {
   test.each([
     [{ Anna: 10 }, 10, 'одна оценка'],
     [{ Anna: 10, Ivan: 8 }, 18, 'несколько оценок']
-  ])('%s → %p', (input, expected) => {
+  ])('%s → %p', (input, expected, _title) => {
     expect(getScore(input)).toBe(expected);
   });
 
